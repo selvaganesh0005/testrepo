@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>DE Prep Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== THEMES ===== */
+[data-theme="dark"] {
+  --bg: #0d0f14; --surface: #151820; --surface2: #1c2030;
+  --border: #252a3a; --text: #e2e8f0; --muted: #64748b;
+  --shadow: rgba(0,0,0,0.5); --grid: rgba(0,229,255,0.025);
+}
+[data-theme="light"] {
+  --bg: #c8d4e0; --surface: #d8e2ec; --surface2: #c0cdd9;
+  --border: #a8b8c8; --text: #0f1923; --muted: #4a6070;
+  --shadow: rgba(0,0,0,0.15); --grid: rgba(0,60,120,0.04);
+}
+:root {
+  --accent:#00e5ff; --green:#00c896; --yellow:#fbbf24;
+  --red:#f87171; --purple:#a78bfa;
+  --fh:'Syne',sans-serif; --fm:'JetBrains Mono',monospace;
+}
+
+/* ===== RESET ===== */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:var(--fm);min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* ===== HEADER ===== */
+header{position:sticky;top:0;z-index:100;background:var(--bg);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:56px;gap:10px;transition:background .3s,border-color .3s;}
+.logo{font-family:var(--fh);font-size:1.1rem;font-weight:800;color:var(--accent);white-space:nowrap;}
+.logo span{color:var(--muted);font-weight:400;font-size:0.72rem;margin-left:6px;}
+.header-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+#sync-status{font-size:0.68rem;min-width:100px;text-align:right;}
+.header-stats{display:flex;gap:12px;font-size:0.7rem;color:var(--muted);}
+.header-stats strong{color:var(--accent);}
+
+/* Theme toggle */
+.theme-toggle{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px;display:flex;gap:2px;}
+.theme-btn{padding:5px 9px;border-radius:16px;border:none;font-size:0.68rem;cursor:pointer;background:none;color:var(--muted);font-family:var(--fm);transition:all .2s;}
+.theme-btn.active{background:var(--accent);color:#000;font-weight:700;}
+
+/* ===== LAYOUT ===== */
+.app{position:relative;z-index:1;display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 56px);}
+
+/* ===== SIDEBAR (desktop) ===== */
+aside{border-right:1px solid var(--border);padding:16px 0;background:var(--surface);transition:background .3s,border-color .3s;overflow-y:auto;}
+.sidebar-label{font-size:0.58rem;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);padding:0 14px;margin-bottom:6px;margin-top:14px;}
+.topic-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:9px 14px;background:none;border:none;color:var(--muted);font-family:var(--fm);font-size:0.76rem;cursor:pointer;transition:all .15s;text-align:left;border-left:2px solid transparent;}
+.topic-btn:hover{color:var(--text);background:var(--surface2);}
+.topic-btn.active{color:var(--accent);border-left-color:var(--accent);background:rgba(0,229,255,0.07);}
+.topic-badge{font-size:0.6rem;background:var(--surface2);padding:2px 6px;border-radius:99px;color:var(--muted);}
+.topic-btn.active .topic-badge{background:rgba(0,229,255,0.15);color:var(--accent);}
+
+/* ===== MAIN ===== */
+main{padding:20px;display:flex;flex-direction:column;gap:18px;overflow-x:hidden;}
+
+/* Topbar */
+.topbar{display:flex;align-items:center;gap:10px;}
+.search-box{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:var(--fm);font-size:0.88rem;outline:none;transition:border-color .2s,background .3s;min-width:0;}
+.search-box:focus{border-color:var(--accent);}
+.search-box::placeholder{color:var(--muted);}
+.btn{padding:11px 16px;border-radius:10px;border:none;font-family:var(--fm);font-size:0.82rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-ghost{background:var(--surface);color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:var(--muted);}
+
+/* Filter pills */
+.filter-bar{display:flex;gap:7px;flex-wrap:wrap;}
+.pill{padding:6px 13px;border-radius:99px;font-size:0.72rem;border:1px solid var(--border);background:none;color:var(--muted);font-family:var(--fm);cursor:pointer;transition:all .15s;}
+.pill:hover{color:var(--text);}
+.pill.active{background:var(--surface2);color:var(--text);border-color:var(--muted);}
+.pill.conf-shaky.active{border-color:var(--yellow);color:var(--yellow);}
+.pill.conf-confident.active{border-color:var(--green);color:var(--green);}
+.pill.conf-weak.active{border-color:var(--red);color:var(--red);}
+
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 12px;position:relative;overflow:hidden;transition:background .3s,border-color .3s,transform .15s,box-shadow .15s;cursor:pointer;}
+.stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px var(--shadow);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card.total::before{background:var(--accent);}
+.stat-card.ans-stat::before{background:var(--purple);}
+.stat-card.weak::before{background:var(--red);}
+.stat-card.shaky::before{background:var(--yellow);}
+.stat-card.confident::before{background:var(--green);}
+.stat-label{font-size:0.58rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;}
+.stat-value{font-family:var(--fh);font-size:1.8rem;font-weight:800;line-height:1;}
+.stat-hint{font-size:0.55rem;color:var(--muted);margin-top:5px;}
+.stat-card.total .stat-value{color:var(--accent);}
+.stat-card.ans-stat .stat-value{color:var(--purple);}
+.stat-card.weak .stat-value{color:var(--red);}
+.stat-card.shaky .stat-value{color:var(--yellow);}
+.stat-card.confident .stat-value{color:var(--green);}
+
+/* Cards */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:13px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:11px;transition:border-color .2s,transform .15s,background .3s;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card:hover{border-color:var(--muted);transform:translateY(-2px);}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.card-topic-tag{font-size:0.62rem;padding:3px 8px;border-radius:4px;background:rgba(124,58,237,0.15);color:var(--purple);border:1px solid rgba(124,58,237,0.3);white-space:nowrap;}
+.card-btns{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.icon-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:5px;border-radius:6px;transition:color .15s,background .15s;min-width:32px;min-height:32px;display:flex;align-items:center;justify-content:center;}
+.icon-btn:hover{color:var(--text);background:var(--surface2);}
+.icon-btn.del:hover{color:var(--red);}
+.card-question{font-size:0.9rem;line-height:1.65;color:var(--text);font-weight:600;}
+.card-answer{font-size:0.8rem;line-height:1.7;color:var(--muted);background:var(--surface2);border-radius:8px;padding:12px;border-left:3px solid var(--border);white-space:pre-wrap;word-break:break-word;}
+.card-answer.collapsed{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.card-footer{display:flex;align-items:center;justify-content:space-between;}
+.conf-selector{display:flex;gap:7px;}
+.conf-dot{width:34px;height:34px;border-radius:50%;border:2px solid var(--border);background:none;cursor:pointer;transition:all .15s;font-size:0.75rem;display:flex;align-items:center;justify-content:center;color:var(--muted);}
+.conf-dot.weak{border-color:var(--red);} .conf-dot.weak.active{background:var(--red);color:#000;}
+.conf-dot.shaky{border-color:var(--yellow);} .conf-dot.shaky.active{background:var(--yellow);color:#000;}
+.conf-dot.confident{border-color:var(--green);} .conf-dot.confident.active{background:var(--green);color:#000;}
+.card-date{font-size:0.62rem;color:var(--muted);}
+.toggle-ans{font-size:0.72rem;color:var(--accent);background:none;border:none;cursor:pointer;font-family:var(--fm);padding:4px 0;text-align:left;}
+.due-badge{font-size:0.6rem;background:rgba(251,191,36,0.15);color:var(--yellow);border:1px solid rgba(251,191,36,0.3);padding:2px 7px;border-radius:4px;}
+
+/* Empty */
+.empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-icon{font-size:3rem;margin-bottom:12px;}
+.empty h3{font-family:var(--fh);font-size:1.1rem;color:var(--text);margin-bottom:6px;}
+
+/* ===== MODALS ===== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(5px);z-index:200;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px;width:620px;max-width:96vw;max-height:92vh;overflow-y:auto;display:flex;flex-direction:column;gap:15px;animation:slideUp .2s ease;transition:background .3s;}
+.modal.wide{width:100vw;height:100vh;max-width:100vw;max-height:100vh;border-radius:0;border:none;margin:0;overflow:hidden;}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;}
+.modal h2{font-family:var(--fh);font-size:1.1rem;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer;line-height:1;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:color .15s,background .15s;}
+.modal-close:hover{color:var(--text);background:var(--surface2);}
+.form-group{display:flex;flex-direction:column;gap:7px;}
+.form-label{font-size:0.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+.form-input,.form-textarea,.form-select{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--fm);font-size:0.88rem;outline:none;transition:border-color .2s,background .3s;width:100%;}
+.form-input:focus,.form-textarea:focus,.form-select:focus{border-color:var(--accent);}
+.form-textarea{min-height:120px;resize:vertical;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;}
+
+/* Review modal */
+.review-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.time-pill{padding:6px 13px;border-radius:99px;font-size:0.72rem;border:1px solid var(--border);background:none;color:var(--muted);font-family:var(--fm);cursor:pointer;transition:all .15s;}
+.time-pill:hover{color:var(--text);}
+.time-pill.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700;}
+.mode-toggle{display:flex;gap:6px;margin-left:auto;}
+.mode-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-family:var(--fm);font-size:0.72rem;cursor:pointer;transition:all .15s;}
+.mode-btn.active{background:var(--surface2);color:var(--text);border-color:var(--muted);}
+.review-meta{font-size:0.72rem;color:var(--muted);}
+.review-list{display:flex;flex-direction:column;gap:13px;flex:1;overflow-y:auto;padding-right:6px;}
+.r-item{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:15px;display:flex;flex-direction:column;gap:8px;}
+.r-item-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.r-num{font-size:0.62rem;color:var(--muted);min-width:22px;}
+.r-topic{font-size:0.62rem;padding:2px 7px;border-radius:4px;background:rgba(124,58,237,0.15);color:var(--purple);border:1px solid rgba(124,58,237,0.3);}
+.r-conf{font-size:0.62rem;padding:2px 7px;border-radius:4px;}
+.r-conf.weak{background:rgba(248,113,113,0.12);color:var(--red);}
+.r-conf.shaky{background:rgba(251,191,36,0.12);color:var(--yellow);}
+.r-conf.confident{background:rgba(0,200,150,0.12);color:var(--green);}
+.r-date{font-size:0.6rem;color:var(--muted);margin-left:auto;}
+.r-q{font-size:0.9rem;font-weight:600;line-height:1.65;color:var(--text);}
+.r-a{font-size:0.8rem;line-height:1.7;color:var(--muted);white-space:pre-wrap;word-break:break-word;border-left:3px solid var(--border);padding-left:12px;margin-top:4px;}
+
+/* ===== MOBILE BOTTOM NAV ===== */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:150;background:var(--surface);border-top:1px solid var(--border);padding:8px 0 env(safe-area-inset-bottom,8px);backdrop-filter:blur(14px);}
+.mobile-nav-inner{display:flex;justify-content:space-around;align-items:center;}
+.mnav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--muted);font-family:var(--fm);font-size:0.58rem;cursor:pointer;padding:6px 12px;border-radius:10px;transition:color .15s;}
+.mnav-btn.active{color:var(--accent);}
+.mnav-btn .icon{font-size:1.3rem;}
+.mnav-add{background:var(--accent);color:#000;border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,229,255,0.4);transition:transform .15s;}
+.mnav-add:active{transform:scale(0.95);}
+
+/* ===== MOBILE TOPIC DRAWER ===== */
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:130;backdrop-filter:blur(3px);}
+.drawer-overlay.open{display:block;}
+.drawer{position:fixed;bottom:0;left:0;right:0;z-index:140;background:var(--surface);border-radius:20px 20px 0 0;padding:16px 0 env(safe-area-inset-bottom,16px);border-top:1px solid var(--border);transform:translateY(100%);transition:transform .3s ease;max-height:75vh;overflow-y:auto;}
+.drawer.open{transform:translateY(0);}
+.drawer-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+.drawer-title{font-family:var(--fh);font-size:1rem;font-weight:700;padding:0 16px;margin-bottom:12px;color:var(--text);}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .app{grid-template-columns:1fr;}
+  aside{display:none;}
+  main{padding:14px 14px 90px;}
+  .header-stats{display:none;}
+  .logo span{display:none;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .stat-card:last-child{grid-column:1/-1;}
+  .cards-grid{grid-template-columns:1fr;}
+  .card{border-radius:16px;}
+  .card-question{font-size:0.95rem;}
+  .topbar .btn-primary{display:none;}
+  .mobile-nav{display:block;}
+  #sync-status{display:none;}
+  .filter-bar{gap:6px;}
+  .pill{font-size:0.75rem;padding:7px 13px;}
+  .conf-dot{width:38px;height:38px;font-size:0.85rem;}
+}
+@media(min-width:769px){
+  .mobile-nav{display:none;}
+  .drawer{display:none;}
+  .drawer-overlay{display:none!important;}
+}
+
+
+/* Clickable review items */
+.r-item{cursor:pointer;transition:border-color .15s,transform .15s;}
+.r-item:hover{border-color:var(--accent);transform:translateY(-1px);}
+.r-item-tap-hint{font-size:0.6rem;color:var(--muted);text-align:right;margin-top:4px;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+<meta name="theme-color" content="#0d0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DE Prep">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" id="pwa-manifest">
+</head>
+<body>
+
+<header>
+  <div class="logo">DE Prep <span>// Tracker</span></div>
+  <div class="header-right">
+    <span id="sync-status"></span>
+    <div class="header-stats">
+      <span>Total: <strong id="h-total">0</strong></span>
+      <span>Due: <strong id="h-due" style="color:var(--yellow)">0</strong></span>
+      <span>Streak: <strong id="h-streak" style="color:var(--green)">0🔥</strong></span>
+    </div>
+    <div class="theme-toggle">
+      <button class="theme-btn active" id="btn-dark" onclick="setTheme('dark')">🌙</button>
+      <button class="theme-btn" id="btn-light" onclick="setTheme('light')">☀️</button>
+    </div>
+
+    <button class="btn-ghost" id="pwa-install-btn" onclick="installPWA()" style="display:none;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--accent);font-size:0.7rem;cursor:pointer;font-family:var(--fm);" title="Install as App">📲 Install</button>
+  </div>
+</header>
+
+<div class="app">
+  <!-- DESKTOP SIDEBAR -->
+  <aside>
+    <div class="sidebar-label">Topics</div>
+    <button class="topic-btn active" data-topic="all" onclick="setTopic('all',this)">All Topics <span class="topic-badge" id="badge-all">0</span></button>
+    <div id="topic-list"></div>
+    <div class="sidebar-label" style="margin-top:20px">Review</div>
+    <button class="topic-btn" data-topic="due" onclick="setTopic('due',this)">📅 Due Today <span class="topic-badge" id="badge-due" style="color:var(--yellow)">0</span></button>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <input class="search-box" id="search" placeholder="🔍  Search questions..." oninput="render()">
+      <button class="btn btn-ghost" onclick="document.getElementById('restore-file-input').click()" style="padding:8px 10px;font-size:1rem;" title="Restore from backup">📥</button>
+      <button class="btn btn-ghost" onclick="exportData()" style="padding:8px 10px;font-size:1rem;" title="Export backup">💾</button>
+      <button class="btn btn-ghost" onclick="openBulk()" style="white-space:nowrap">⚡ Bulk</button>
+      <button class="btn btn-primary" onclick="openAdd()">+ Add Question</button>
+    </div>
+
+    <div class="filter-bar">
+      <button class="pill conf-all active" onclick="setConf('all',this)">All</button>
+      <button class="pill conf-weak" onclick="setConf('weak',this)">🔴 Not Sure</button>
+      <button class="pill conf-shaky" onclick="setConf('shaky',this)">🟡 Shaky</button>
+      <button class="pill conf-confident" onclick="setConf('confident',this)">🟢 Confident</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card total" onclick="openReview('questions')">
+        <div class="stat-label">Total Questions</div>
+        <div class="stat-value" id="s-total">0</div>
+        <div class="stat-hint">↗ tap to review</div>
+      </div>
+      <div class="stat-card ans-stat" onclick="openReview('answers')">
+        <div class="stat-label">Total Answers</div>
+        <div class="stat-value" id="s-ans">0</div>
+        <div class="stat-hint">↗ tap to review</div>
+      </div>
+      <div class="stat-card weak" onclick="filterStat('weak')">
+        <div class="stat-label">Not Sure</div>
+        <div class="stat-value" id="s-weak">0</div>
+      </div>
+      <div class="stat-card shaky" onclick="filterStat('shaky')">
+        <div class="stat-label">Shaky</div>
+        <div class="stat-value" id="s-shaky">0</div>
+      </div>
+      <div class="stat-card confident" onclick="filterStat('confident')">
+        <div class="stat-label">Confident</div>
+        <div class="stat-value" id="s-confident">0</div>
+      </div>
+    </div>
+
+    <div class="cards-grid" id="cards"></div>
+  </main>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mnav-btn active" id="mnav-home" onclick="mnavGo('home',this)">
+      <span class="icon">🏠</span><span>Home</span>
+    </button>
+    <button class="mnav-btn" id="mnav-topics" onclick="openDrawer()">
+      <span class="icon">📂</span><span>Topics</span>
+    </button>
+    <button class="mnav-btn" id="mnav-bulk" onclick="openBulk()">
+      <span class="icon">⚡</span><span>Bulk</span>
+    </button>
+    <button class="mnav-add" onclick="openAdd()" title="Add Question">＋</button>
+    <button class="mnav-btn" id="mnav-review" onclick="openReview('questions')">
+      <span class="icon">📖</span><span>Review</span>
+    </button>
+    <button class="mnav-btn" id="mnav-answers" onclick="openReview('answers')">
+      <span class="icon">💡</span><span>Answers</span>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE TOPIC DRAWER -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="topic-drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-title">Topics</div>
+  <div id="drawer-topic-list"></div>
+  <div style="padding:0 16px;margin-top:8px;">
+    <button class="topic-btn" style="border-radius:8px;" onclick="setTopicMobile('due')">📅 Due Today <span class="topic-badge" id="badge-due2" style="color:var(--yellow)">0</span></button>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="add-title">Add Question</h2>
+      <button class="modal-close" onclick="closeM('modal-add')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Topic</label>
+      <select class="form-select" id="f-topic">
+        <option>SQL</option><option>Python</option><option>PySpark</option><option>Git</option><option>Azure Data Factory</option>
+        <option>Databricks</option><option>Spark</option><option>Azure Synapse</option>
+        <option>Data Modeling</option><option>General DE</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Question</label>
+      <textarea class="form-textarea" id="f-question" placeholder="Type or paste your question here..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Answer / Notes</label>
+      <textarea class="form-textarea" id="f-answer" placeholder="Paste the answer from Claude or your notes..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confidence</label>
+      <select class="form-select" id="f-conf">
+        <option value="weak">🔴 Not Sure</option>
+        <option value="shaky">🟡 Shaky</option>
+        <option value="confident">🟢 Confident</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeM('modal-add')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW MODAL (fullscreen) -->
+<div class="modal-overlay" id="modal-review">
+  <div class="modal wide">
+    <div class="modal-header" style="padding-bottom:12px;border-bottom:1px solid var(--border);">
+      <h2 id="r-title">All Questions</h2>
+      <button class="modal-close" onclick="closeM('modal-review')">✕</button>
+    </div>
+    <div class="review-controls">
+      <button class="time-pill active" data-d="all" onclick="setTP(this,'all')">All</button>
+      <button class="time-pill" data-d="1"   onclick="setTP(this,1)">Today</button>
+      <button class="time-pill" data-d="7"   onclick="setTP(this,7)">Week</button>
+      <button class="time-pill" data-d="30"  onclick="setTP(this,30)">Month</button>
+      <button class="time-pill" data-d="90"  onclick="setTP(this,90)">3 Months</button>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mb-q" onclick="setRM('questions')">❓ Qs</button>
+        <button class="mode-btn" id="mb-a" onclick="setRM('answers')">📖 Q+A</button>
+      </div>
+    </div>
+    <div class="review-meta" id="r-meta"></div>
+    <div class="review-list" id="r-list"></div>
+  </div>
+</div>
+
+<script>
+// ===== AZURE CONFIG =====
+const AZURE_ACCOUNT = 'linkmyde';
+const AZURE_SAS     = 'sv=2024-11-04&ss=bfqt&srt=co&sp=rwdlacupyx&se=2026-03-22T20:43:15Z&st=2026-03-01T12:28:15Z&spr=https,http&sig=WEATJmQ2lCAZrYZnu42BKxnlTKim%2F6a21MZQ396a55I%3D';
+const TABLE_NAME    = 'deprepquestions';
+const PART_KEY      = 'deprep';
+const BASE_URL      = `https://${AZURE_ACCOUNT}.table.core.windows.net`;
+
+// ===== AZURE HELPERS =====
+async function azReq(method, url, body) {
+  const h = {'Accept':'application/json;odata=nometadata','Content-Type':'application/json'};
+  const opts = {method, headers:h};
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  if (r.status===204) return null;
+  if (!r.ok) { const t=await r.text(); throw new Error(`${r.status}: ${t}`); }
+  try { return await r.json(); } catch(e) { return null; }
+}
+async function ensureTable() {
+  await fetch(`${BASE_URL}/Tables?${AZURE_SAS}`,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json;odata=nometadata'},body:JSON.stringify({TableName:TABLE_NAME})}).catch(()=>{});
+}
+async function azLoad() {
+  showStatus('☁️ Syncing...','loading');
+  try {
+    await ensureTable();
+    const url=`${BASE_URL}/${TABLE_NAME}?${AZURE_SAS}&$filter=PartitionKey eq '${PART_KEY}'`;
+    const res=await azReq('GET',url);
+    const rows=(res&&res.value)?res.value:[];
+    data=rows.map(r=>({id:r.RowKey,topic:r.topic||'',question:r.question||'',answer:r.answer||'',
+      confidence:r.confidence||'weak',createdAt:r.createdAt?parseInt(r.createdAt):Date.now(),
+      lastReviewed:r.lastReviewed?parseInt(r.lastReviewed):null}));
+    localStorage.setItem('deprep_v2',JSON.stringify(data));
+    showStatus(`✅ ${data.length} questions synced`,'ok');
+  } catch(e) {
+    data=JSON.parse(localStorage.getItem('deprep_v2')||'[]');
+    showStatus('⚠️ Offline — local data','warn');
+  }
+  render();
+}
+async function azSave(entry) {
+  showStatus('☁️ Saving...','loading');
+  try {
+    const url=`${BASE_URL}/${TABLE_NAME}(PartitionKey='${PART_KEY}',RowKey='${entry.id}')?${AZURE_SAS}`;
+    await azReq('PUT',url,{PartitionKey:PART_KEY,RowKey:entry.id,topic:entry.topic,
+      question:entry.question,answer:entry.answer||'',confidence:entry.confidence,
+      createdAt:String(entry.createdAt),lastReviewed:entry.lastReviewed?String(entry.lastReviewed):''});
+    localStorage.setItem('deprep_v2',JSON.stringify(data));
+    showStatus('✅ Saved','ok');
+  } catch(e) { localStorage.setItem('deprep_v2',JSON.stringify(data)); showStatus('⚠️ Local only','warn'); }
+}
+async function azDelete(id) {
+  try {
+    const url=`${BASE_URL}/${TABLE_NAME}(PartitionKey='${PART_KEY}',RowKey='${id}')?${AZURE_SAS}`;
+    await fetch(url,{method:'DELETE',headers:{'Accept':'application/json;odata=nometadata','If-Match':'*'}});
+  } catch(e){}
+}
+function showStatus(msg, type) {
+  const el=document.getElementById('sync-status');
+  if(!el) return;
+  el.textContent=msg;
+  el.style.color=type==='ok'?'var(--green)':type==='warn'?'var(--yellow)':'var(--accent)';
+  if(type==='ok') setTimeout(()=>{el.textContent='';},3000);
+}
+
+// ===== STATE =====
+let data=JSON.parse(localStorage.getItem('deprep_v2')||'[]');
+let editId=null, curTopic='all', curConf='all', rDays='all', rMode='questions';
+
+const TOPICS=['SQL','Python','PySpark','Git','Azure Data Factory','Databricks','Spark','Azure Synapse','Data Modeling','General DE','Other'];
+const DUE_DAYS={weak:1,shaky:3,confident:7};
+const CLABEL={weak:'🔴 Not Sure',shaky:'🟡 Shaky',confident:'🟢 Confident'};
+
+// ===== THEME =====
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('deprep_theme',t);
+  document.getElementById('btn-dark').classList.toggle('active',t==='dark');
+  document.getElementById('btn-light').classList.toggle('active',t==='light');
+}
+setTheme(localStorage.getItem('deprep_theme')||'dark');
+
+// ===== STREAK =====
+function getStreak() {
+  const today=new Date().toDateString();
+  const s=JSON.parse(localStorage.getItem('deprep_streak')||'{"last":"","count":0}');
+  if(s.last===today) return s.count;
+  const yest=new Date(Date.now()-86400000).toDateString();
+  const c=s.last===yest?s.count+1:1;
+  localStorage.setItem('deprep_streak',JSON.stringify({last:today,count:c}));
+  return c;
+}
+
+// ===== UTILS =====
+function isDue(e){if(!e.lastReviewed)return false;return Date.now()>=new Date(e.lastReviewed).getTime()+DUE_DAYS[e.confidence]*86400000;}
+function fmtDate(ts){if(!ts)return '';return new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+function getFiltered(){
+  let items=[...data];
+  const q=document.getElementById('search').value.toLowerCase();
+  if(q) items=items.filter(e=>e.question.toLowerCase().includes(q)||(e.answer||'').toLowerCase().includes(q));
+  if(curTopic==='due') items=items.filter(isDue);
+  else if(curTopic!=='all') items=items.filter(e=>e.topic===curTopic);
+  if(curConf!=='all') items=items.filter(e=>e.confidence===curConf);
+  return items.reverse();
+}
+function byDays(items,d){
+  if(d==='all') return items;
+  return items.filter(e=>e.createdAt>=Date.now()-d*86400000);
+}
+
+// ===== RENDER =====
+function render() {
+  const items=getFiltered();
+  const withAns=data.filter(e=>e.answer&&e.answer.trim());
+  const due=data.filter(isDue).length;
+
+  document.getElementById('s-total').textContent=data.length;
+  document.getElementById('s-ans').textContent=withAns.length;
+  document.getElementById('s-weak').textContent=data.filter(e=>e.confidence==='weak').length;
+  document.getElementById('s-shaky').textContent=data.filter(e=>e.confidence==='shaky').length;
+  document.getElementById('s-confident').textContent=data.filter(e=>e.confidence==='confident').length;
+  document.getElementById('h-total').textContent=data.length;
+  document.getElementById('h-due').textContent=due;
+  document.getElementById('badge-due').textContent=due;
+  if(document.getElementById('badge-due2')) document.getElementById('badge-due2').textContent=due;
+  document.getElementById('h-streak').textContent=getStreak()+'🔥';
+  document.getElementById('badge-all').textContent=data.length;
+
+  // Desktop sidebar
+  const tl=document.getElementById('topic-list');
+  tl.innerHTML='';
+  // Drawer topics
+  const dl=document.getElementById('drawer-topic-list');
+  dl.innerHTML='';
+
+  TOPICS.forEach(t=>{
+    const cnt=data.filter(e=>e.topic===t).length;
+    // desktop
+    const btn=document.createElement('button');
+    btn.className='topic-btn'+(curTopic===t?' active':'');
+    btn.innerHTML=`${t} <span class="topic-badge">${cnt}</span>`;
+    btn.onclick=()=>setTopic(t,btn);
+    tl.appendChild(btn);
+    // mobile drawer
+    const dbtn=document.createElement('button');
+    dbtn.className='topic-btn'+(curTopic===t?' active':'');
+    dbtn.style.cssText='padding:12px 16px;font-size:0.85rem;';
+    dbtn.innerHTML=`${t} <span class="topic-badge">${cnt}</span>`;
+    dbtn.onclick=()=>setTopicMobile(t);
+    dl.appendChild(dbtn);
+  });
+
+  // Cards
+  const c=document.getElementById('cards');
+  if(!items.length){
+    c.innerHTML=`<div class="empty"><div class="empty-icon">📭</div><h3>No questions found</h3><p>Add your first question or adjust filters.</p></div>`;
+    return;
+  }
+  c.innerHTML=items.map(e=>`
+    <div class="card">
+      <div class="card-header">
+        <span class="card-topic-tag">${e.topic}</span>
+        <div class="card-btns">
+          ${isDue(e)?'<span class="due-badge">DUE</span>':''}
+          <button class="icon-btn" onclick="editE('${e.id}')">✏️</button>
+          <button class="icon-btn del" onclick="delE('${e.id}')">🗑️</button>
+        </div>
+      </div>
+      <div class="card-question">${esc(e.question)}</div>
+      ${e.answer?`<div class="card-answer collapsed" id="ca-${e.id}">${esc(e.answer)}</div>
+      <button class="toggle-ans" onclick="togAns('${e.id}')">▼ Show answer</button>`:''}
+      <div class="card-footer">
+        <div class="conf-selector">
+          <button class="conf-dot weak ${e.confidence==='weak'?'active':''}" onclick="setC2('${e.id}','weak')" title="Not Sure">✗</button>
+          <button class="conf-dot shaky ${e.confidence==='shaky'?'active':''}" onclick="setC2('${e.id}','shaky')" title="Shaky">~</button>
+          <button class="conf-dot confident ${e.confidence==='confident'?'active':''}" onclick="setC2('${e.id}','confident')" title="Confident">✓</button>
+        </div>
+        <span class="card-date">${fmtDate(e.createdAt)}</span>
+      </div>
+    </div>`).join('');
+}
+
+function togAns(id){
+  const el=document.getElementById('ca-'+id);
+  const bt=el.nextElementSibling;
+  el.classList.toggle('collapsed');
+  bt.textContent=el.classList.contains('collapsed')?'▼ Show answer':'▲ Hide answer';
+}
+
+// ===== FILTERS =====
+function setTopic(t,el){
+  curTopic=t;
+  document.querySelectorAll('.topic-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+function setTopicMobile(t){
+  curTopic=t;
+  closeDrawer();
+  render();
+  document.querySelectorAll('#mnav-home,#mnav-topics,#mnav-review,#mnav-answers').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mnav-topics').classList.add('active');
+}
+function setConf(c,el){
+  curConf=c;
+  document.querySelectorAll('.filter-bar .pill').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+function filterStat(c){
+  curConf=c;
+  document.querySelectorAll('.filter-bar .pill').forEach(b=>b.classList.toggle('active',b.classList.contains('conf-'+c)));
+  render();
+  window.scrollTo({top:300,behavior:'smooth'});
+}
+async function setC2(id,conf){
+  const e=data.find(x=>x.id===id);
+  if(!e) return;
+  e.confidence=conf; e.lastReviewed=Date.now();
+  render(); await azSave(e);
+}
+
+// ===== MOBILE NAV =====
+function mnavGo(tab,el){
+  curTopic='all'; curConf='all';
+  document.querySelectorAll('.mnav-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('search').value='';
+  document.querySelectorAll('.filter-bar .pill').forEach(b=>b.classList.toggle('active',b.classList.contains('conf-all')));
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ===== DRAWER =====
+function openDrawer(){
+  document.getElementById('topic-drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('topic-drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+// ===== REVIEW MODAL =====
+function openReview(mode){
+  rMode=mode; rDays='all';
+  document.getElementById('r-title').textContent=mode==='answers'?'📖 All Q + Answers':'❓ All Questions';
+  document.getElementById('mb-q').classList.toggle('active',mode==='questions');
+  document.getElementById('mb-a').classList.toggle('active',mode==='answers');
+  document.querySelectorAll('.time-pill').forEach(p=>p.classList.toggle('active',p.dataset.d==='all'));
+  document.getElementById('modal-review').classList.add('open');
+  renderReview();
+}
+function setTP(el,d){
+  rDays=d==='all'?'all':parseInt(d);
+  document.querySelectorAll('.time-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  renderReview();
+}
+function setRM(m){
+  rMode=m;
+  document.getElementById('mb-q').classList.toggle('active',m==='questions');
+  document.getElementById('mb-a').classList.toggle('active',m==='answers');
+  document.getElementById('r-title').textContent=m==='answers'?'📖 All Q + Answers':'❓ All Questions';
+  renderReview();
+}
+function renderReview(){
+  const items=byDays([...data].reverse(),rDays);
+  document.getElementById('r-meta').textContent=`Showing ${items.length} question${items.length!==1?'s':''}`;
+  if(!items.length){
+    document.getElementById('r-list').innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted)">No questions in this time range.</div>`;
+    return;
+  }
+  document.getElementById('r-list').innerHTML=items.map((e,i)=>`
+    <div class="r-item" onclick="openQA('${e.id}')">
+      <div class="r-item-top">
+        <span class="r-num">#${i+1}</span>
+        <span class="r-topic">${e.topic}</span>
+        <span class="r-conf ${e.confidence}">${CLABEL[e.confidence]||''}</span>
+        <span class="r-date">${fmtDate(e.createdAt)}</span>
+      </div>
+      <div class="r-q">${esc(e.question)}</div>
+      ${rMode==='answers'&&e.answer?`<div class="r-a">${esc(e.answer)}</div>`:''}
+      <div class="r-item-tap-hint">👆 tap for full Q&A</div>
+    </div>`).join('');
+}
+
+// ===== CRUD =====
+function openAdd(){
+  editId=null;
+  document.getElementById('add-title').textContent='Add Question';
+  document.getElementById('f-topic').value='SQL';
+  document.getElementById('f-question').value='';
+  document.getElementById('f-answer').value='';
+  document.getElementById('f-conf').value='weak';
+  document.getElementById('modal-add').classList.add('open');
+  setTimeout(()=>document.getElementById('f-question').focus(),150);
+}
+function editE(id){
+  const e=data.find(x=>x.id===id); if(!e) return;
+  editId=id;
+  document.getElementById('add-title').textContent='Edit Question';
+  document.getElementById('f-topic').value=e.topic;
+  document.getElementById('f-question').value=e.question;
+  document.getElementById('f-answer').value=e.answer||'';
+  document.getElementById('f-conf').value=e.confidence;
+  document.getElementById('modal-add').classList.add('open');
+}
+function closeM(id){ document.getElementById(id).classList.remove('open'); if(id==='modal-add') editId=null; }
+
+async function saveEntry(){
+  const q=document.getElementById('f-question').value.trim();
+  if(!q){alert('Please enter a question!');return;}
+  let entry;
+  if(editId){
+    entry=data.find(e=>e.id===editId);
+    entry.topic=document.getElementById('f-topic').value;
+    entry.question=q;
+    entry.answer=document.getElementById('f-answer').value.trim();
+    entry.confidence=document.getElementById('f-conf').value;
+  } else {
+    entry={id:Date.now().toString(),topic:document.getElementById('f-topic').value,
+      question:q,answer:document.getElementById('f-answer').value.trim(),
+      confidence:document.getElementById('f-conf').value,createdAt:Date.now(),lastReviewed:null};
+    data.push(entry);
+  }
+  closeM('modal-add'); render(); await azSave(entry);
+}
+
+async function delE(id){
+  if(!confirm('Delete this question?')) return;
+  data=data.filter(e=>e.id!==id);
+  render(); await azDelete(id);
+  localStorage.setItem('deprep_v2',JSON.stringify(data));
+}
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeM('modal-add');closeM('modal-review');closeM('modal-bulk');closeM('modal-qa');closeDrawer();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&document.getElementById('modal-add').classList.contains('open')) saveEntry();
+});
+['modal-add','modal-review','modal-bulk','modal-qa'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))closeM(id);});
+});
+
+
+// ===== BULK IMPORT =====
+function openBulk() {
+  document.getElementById('bulk-text').value='';
+  document.getElementById('bulk-preview').textContent='';
+  document.getElementById('modal-bulk').classList.add('open');
+  setTimeout(()=>document.getElementById('bulk-text').focus(),150);
+}
+
+function parseBulk(text) {
+  const entries = [];
+  // Split on lines starting with Q: (case insensitive)
+  const lines = text.split('\n');
+  let curQ = null, curA = [];
+  for (let line of lines) {
+    const trimmed = line.trim();
+    if (/^Q[:：]/i.test(trimmed)) {
+      // Save previous entry if exists
+      if (curQ) entries.push({q: curQ.trim(), a: curA.join('\n').trim()});
+      curQ = trimmed.replace(/^Q[:：]\s*/i, '');
+      curA = [];
+    } else if (/^A[:：]/i.test(trimmed)) {
+      curA = [trimmed.replace(/^A[:：]\s*/i, '')];
+    } else if (curQ !== null && trimmed) {
+      curA.push(trimmed);
+    }
+  }
+  if (curQ) entries.push({q: curQ.trim(), a: curA.join('\n').trim()});
+  return entries;
+}
+
+// Live preview count
+document.addEventListener('DOMContentLoaded', ()=>{
+  const ta = document.getElementById('bulk-text');
+  if (ta) ta.addEventListener('input', ()=>{
+    const parsed = parseBulk(ta.value);
+    const prev = document.getElementById('bulk-preview');
+    if (parsed.length > 0) {
+      prev.textContent = `✅ Found ${parsed.length} question${parsed.length!==1?'s':''} ready to import`;
+    } else {
+      prev.textContent = ta.value.trim() ? '⚠️ Format not recognised — use Q: ... A: ...' : '';
+    }
+  });
+});
+
+async function saveBulk() {
+  const text = document.getElementById('bulk-text').value;
+  const parsed = parseBulk(text);
+  if (!parsed.length) { alert('No questions found! Make sure to use the Q: / A: format shown above.'); return; }
+  const topic = document.getElementById('bulk-topic').value;
+  const conf  = document.getElementById('bulk-conf').value;
+  const now   = Date.now();
+  const newEntries = parsed.map((p, i) => ({
+    id: String(now + i),
+    topic, question: p.q, answer: p.a,
+    confidence: conf, createdAt: now + i, lastReviewed: null
+  }));
+  data.push(...newEntries);
+  closeM('modal-bulk');
+  render();
+  showStatus(`☁️ Saving ${newEntries.length} questions...`, 'loading');
+  // Save all to Azure one by one
+  for (const entry of newEntries) {
+    await azSave(entry);
+  }
+  showStatus(`✅ ${newEntries.length} questions imported!`, 'ok');
+}
+
+// ===== Q&A POPUP =====
+function openQA(id) {
+  const e = data.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('qa-topic-label').textContent = e.topic + ' · ' + (e.confidence==='weak'?'🔴 Not Sure':e.confidence==='shaky'?'🟡 Shaky':'🟢 Confident');
+  document.getElementById('qa-question').textContent = e.question;
+  document.getElementById('qa-answer').textContent = e.answer || '(No answer added yet)';
+  // Confidence selector
+  const sel = document.getElementById('qa-conf-selector');
+  sel.innerHTML = ['weak','shaky','confident'].map(c=>`
+    <button class="conf-dot ${c} ${e.confidence===c?'active':''}" 
+      onclick="setQAConf('${id}','${c}')" 
+      title="${c==='weak'?'Not Sure':c==='shaky'?'Shaky':'Confident'}">
+      ${c==='weak'?'✗':c==='shaky'?'~':'✓'}
+    </button>`).join('');
+  document.getElementById('modal-qa').classList.add('open');
+}
+
+async function setQAConf(id, conf) {
+  const e = data.find(x => x.id === id);
+  if (!e) return;
+  e.confidence = conf; e.lastReviewed = Date.now();
+  // Update popup label
+  document.getElementById('qa-topic-label').textContent = e.topic + ' · ' + (conf==='weak'?'🔴 Not Sure':conf==='shaky'?'🟡 Shaky':'🟢 Confident');
+  const sel = document.getElementById('qa-conf-selector');
+  sel.querySelectorAll('.conf-dot').forEach(b => {
+    b.classList.toggle('active', b.title===(conf==='weak'?'Not Sure':conf==='shaky'?'Shaky':'Confident'));
+  });
+  render(); await azSave(e);
+}
+
+
+// ===== EXPORT & IMPORT BACKUP =====
+function exportData() {
+  if (!data.length) { alert('No questions to export yet!'); return; }
+
+  // Build a clean readable JSON backup
+  const backup = {
+    exportedAt: new Date().toISOString(),
+    totalQuestions: data.length,
+    questions: data.map(e => ({
+      id:          e.id,
+      topic:       e.topic,
+      question:    e.question,
+      answer:      e.answer || '',
+      confidence:  e.confidence,
+      createdAt:   new Date(e.createdAt).toISOString(),
+      lastReviewed:e.lastReviewed ? new Date(e.lastReviewed).toISOString() : null
+    }))
+  };
+
+  // Also build a readable text version
+  const textLines = ['DE PREP TRACKER — FULL EXPORT', '='.repeat(50), `Exported: ${new Date().toLocaleString()}`, `Total Questions: ${data.length}`, '', ''];
+  const byTopic = {};
+  data.forEach(e => { if (!byTopic[e.topic]) byTopic[e.topic] = []; byTopic[e.topic].push(e); });
+  Object.entries(byTopic).forEach(([topic, items]) => {
+    textLines.push('='.repeat(50));
+    textLines.push(`TOPIC: ${topic.toUpperCase()} (${items.length} questions)`);
+    textLines.push('='.repeat(50));
+    items.forEach((e, i) => {
+      textLines.push(`
+Q${i+1}: ${e.question}`);
+      if (e.answer) textLines.push(`A: ${e.answer}`);
+      textLines.push(`Confidence: ${e.confidence==='weak'?'Not Sure':e.confidence==='shaky'?'Shaky':'Confident'}`);
+      textLines.push('-'.repeat(40));
+    });
+    textLines.push('');
+  });
+
+  // Download JSON backup file
+  const jsonBlob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+  const jsonUrl  = URL.createObjectURL(jsonBlob);
+  const jsonLink = document.createElement('a');
+  jsonLink.href = jsonUrl;
+  jsonLink.download = `DEPrep_Backup_${new Date().toISOString().slice(0,10)}.json`;
+  jsonLink.click();
+  URL.revokeObjectURL(jsonUrl);
+
+  // Download readable text file
+  setTimeout(() => {
+    const txtBlob = new Blob([textLines.join('\n')], {type:'text/plain'});
+    const txtUrl  = URL.createObjectURL(txtBlob);
+    const txtLink = document.createElement('a');
+    txtLink.href = txtUrl;
+    txtLink.download = `DEPrep_Readable_${new Date().toISOString().slice(0,10)}.txt`;
+    txtLink.click();
+    URL.revokeObjectURL(txtUrl);
+  }, 500);
+
+  showStatus(`✅ Exported ${data.length} questions!`, 'ok');
+}
+
+// Import from JSON backup file
+function importBackup(file) {
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const backup = JSON.parse(e.target.result);
+      const questions = backup.questions || backup; // handle both formats
+      if (!Array.isArray(questions)) throw new Error('Invalid format');
+      
+      const toImport = questions.map(q => ({
+        id:          q.id || String(Date.now() + Math.random()),
+        topic:       q.topic || 'General DE',
+        question:    q.question || '',
+        answer:      q.answer || '',
+        confidence:  q.confidence || 'weak',
+        createdAt:   q.createdAt ? new Date(q.createdAt).getTime() : Date.now(),
+        lastReviewed:q.lastReviewed ? new Date(q.lastReviewed).getTime() : null
+      }));
+
+      // Merge — skip duplicates by id
+      const existingIds = new Set(data.map(d => d.id));
+      const newOnes = toImport.filter(q => !existingIds.has(q.id));
+      
+      if (!newOnes.length) { alert('All questions already exist — nothing new to import.'); return; }
+      if (!confirm(`Import ${newOnes.length} new questions from backup?`)) return;
+
+      data.push(...newOnes);
+      render();
+      showStatus(`☁️ Syncing ${newOnes.length} questions to Azure...`, 'loading');
+      for (const entry of newOnes) await azSave(entry);
+      showStatus(`✅ ${newOnes.length} questions restored!`, 'ok');
+    } catch(err) {
+      alert('Could not read backup file. Make sure it is a valid DEPrep JSON backup.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+
+// ===== PWA SETUP =====
+// Inline manifest
+const manifest = {
+  name: "DE Prep Tracker",
+  short_name: "DE Prep",
+  description: "Data Engineering Interview Prep Tracker",
+  start_url: ".",
+  display: "standalone",
+  background_color: "#0d0f14",
+  theme_color: "#0d0f14",
+  orientation: "portrait-primary",
+  icons: [
+    {
+      src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%230d0f14'/><text y='340' x='60' font-size='320' font-family='serif'>🗄️</text></svg>",
+      sizes: "512x512",
+      type: "image/svg+xml",
+      purpose: "any maskable"
+    }
+  ]
+};
+const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+const manifestUrl = URL.createObjectURL(manifestBlob);
+document.getElementById('pwa-manifest').href = manifestUrl;
+
+// Service Worker for offline support
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'deprep-v1';
+    self.addEventListener('install', e => {
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(keys =>
+        Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      ));
+    });
+    self.addEventListener('fetch', e => {
+      if (e.request.url.includes('table.core.windows.net')) return;
+      e.respondWith(
+        caches.match(e.request).then(cached => {
+          return cached || fetch(e.request).then(res => {
+            const clone = res.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone));
+            return res;
+          });
+        })
+      );
+    });
+  `;
+  const swBlob = new Blob([swCode], {type:'application/javascript'});
+  const swUrl = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(()=>{});
+}
+
+// Install prompt
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('pwa-install-btn').style.display = 'block';
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwa-install-btn').style.display = 'none';
+  deferredPrompt = null;
+  showStatus('✅ App installed!', 'ok');
+});
+function installPWA() {
+  if (!deferredPrompt) {
+    alert('To install:\n\nChrome: tap the 3-dot menu → "Add to Home Screen"\nSafari: tap Share → "Add to Home Screen"');
+    return;
+  }
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+}
+
+// ===== INIT =====
+azLoad();
+</script>
+
+<!-- HIDDEN FILE INPUT FOR RESTORE -->
+<input type="file" id="restore-file-input" accept=".json" style="display:none" onchange="importBackup(this.files[0])">
+
+<!-- BULK IMPORT MODAL -->
+<div class="modal-overlay" id="modal-bulk">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>⚡ Bulk Import Q&amp;A</h2>
+      <button class="modal-close" onclick="closeM('modal-bulk')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Topic for all these questions</label>
+      <select class="form-select" id="bulk-topic">
+        <option>SQL</option><option>Python</option><option>PySpark</option><option>Git</option><option>Azure Data Factory</option>
+        <option>Databricks</option><option>Spark</option><option>Azure Synapse</option>
+        <option>Data Modeling</option><option>General DE</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Paste all Q&amp;As below — use this format:</label>
+      <div style="background:var(--surface2);border-radius:8px;padding:12px;font-size:0.72rem;color:var(--muted);line-height:1.8;border:1px dashed var(--border);">
+        Q: What is a partition in Spark?<br>
+        A: A partition is a chunk of data that can be processed in parallel...<br><br>
+        Q: What is the difference between DataFrame and Dataset?<br>
+        A: DataFrame is untyped, Dataset is typed...
+      </div>
+      <textarea class="form-textarea" id="bulk-text" placeholder="Q: Your first question here&#10;A: Answer here&#10;&#10;Q: Second question&#10;A: Answer here" style="min-height:200px;margin-top:8px;"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confidence for all</label>
+      <select class="form-select" id="bulk-conf">
+        <option value="weak">🔴 Not Sure</option>
+        <option value="shaky">🟡 Shaky</option>
+        <option value="confident">🟢 Confident</option>
+      </select>
+    </div>
+    <div id="bulk-preview" style="font-size:0.75rem;color:var(--green);min-height:20px;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeM('modal-bulk')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBulk()">Import All</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q&A POPUP (click question in review) -->
+<div class="modal-overlay" id="modal-qa">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <h2 style="font-size:0.85rem;color:var(--muted);font-weight:400;" id="qa-topic-label"></h2>
+      <button class="modal-close" onclick="closeM('modal-qa')">✕</button>
+    </div>
+    <div id="qa-question" style="font-size:1rem;font-weight:700;line-height:1.65;color:var(--text);"></div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;">
+      <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;">Answer</div>
+      <div id="qa-answer" style="font-size:0.85rem;line-height:1.75;color:var(--muted);white-space:pre-wrap;word-break:break-word;"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;padding-top:8px;border-top:1px solid var(--border);">
+      <span style="font-size:0.72rem;color:var(--muted);">Confidence:</span>
+      <div id="qa-conf-selector" style="display:flex;gap:7px;"></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
